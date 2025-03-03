@@ -36,22 +36,32 @@ export function TierFilter({
     return `${textColor} border-l-4 ${borderColor} pl-2`;
   };
   
+  // Determine the current value for the tabs
+  const getCurrentValue = () => {
+    if (isWatchlistSelected) return "watchlist";
+    return selectedTier?.toString() || "all";
+  };
+  
   return (
     <div className="w-full">
       <h2 className="text-lg font-semibold mb-3">Filter by Tier</h2>
       <Tabs 
-        defaultValue={selectedTier?.toString() || "all"} 
+        value={getCurrentValue()}
         orientation="vertical"
         onValueChange={(value) => {
-          // Reset watchlist selection when selecting a tier
-          if (isWatchlistSelected) {
-            onWatchlistChange(false);
-          }
-          
-          if (value === "all") {
+          if (value === "watchlist") {
+            // Select watchlist, deselect tier
+            onWatchlistChange(true);
             onTierChange(null);
           } else {
-            onTierChange(Number(value));
+            // Select tier, deselect watchlist
+            onWatchlistChange(false);
+            
+            if (value === "all") {
+              onTierChange(null);
+            } else {
+              onTierChange(Number(value));
+            }
           }
         }}
         className="w-full"
@@ -63,6 +73,8 @@ export function TierFilter({
           >
             All Tiers
           </TabsTrigger>
+          
+          {/* Tier tabs */}
           {tiers.map((tier) => (
             <TabsTrigger 
               key={tier} 
@@ -75,30 +87,22 @@ export function TierFilter({
               </div>
             </TabsTrigger>
           ))}
+          
+          {/* Custom HR separator */}
+          <div className="h-px w-full my-4 bg-gray-300"></div>
+          
+          {/* Watchlist tab */}
+          <TabsTrigger 
+            value="watchlist" 
+            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Bookmark className={`h-4 w-4 ${isWatchlistSelected ? 'fill-blue-500 text-blue-500' : ''}`} />
+              <span className="font-medium">Watchlist</span>
+            </div>
+          </TabsTrigger>
         </TabsList>
       </Tabs>
-      
-      {/* Watchlist section - separate from tier filters */}
-      <div className="mt-6 border-t pt-4">
-        <button 
-          className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
-            isWatchlistSelected ? 'bg-gray-200' : 'hover:bg-gray-100'
-          }`}
-          onClick={() => {
-            // Toggle watchlist selection
-            const newState = !isWatchlistSelected;
-            onWatchlistChange(newState);
-            
-            // Reset tier selection when selecting watchlist
-            if (newState && selectedTier !== null) {
-              onTierChange(null);
-            }
-          }}
-        >
-          <Bookmark className={`h-4 w-4 ${isWatchlistSelected ? 'fill-blue-500 text-blue-500' : ''}`} />
-          <span className="font-medium">Watchlist</span>
-        </button>
-      </div>
     </div>
   );
 } 
