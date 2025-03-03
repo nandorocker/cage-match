@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { movies, Movie, tierDescriptions } from "@/lib/movies";
 import { MovieGrid } from "@/components/movie-grid";
 import { TierFilter } from "@/components/tier-filter";
@@ -14,11 +14,49 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [sortAscending, setSortAscending] = useState(false); // Default to worst to best (descending)
+  const [isWatchlistSelected, setIsWatchlistSelected] = useState(false);
+  const [bookmarkedMovies, setBookmarkedMovies] = useState<Set<number>>(new Set());
+  
+  // Load bookmarked movies from localStorage on initial render
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const bookmarked = new Set<number>();
+      
+      // Check each movie if it's bookmarked
+      movies.forEach(movie => {
+        const isBookmarked = localStorage.getItem(`bookmarked-${movie.ranking}`) === 'true';
+        if (isBookmarked) {
+          bookmarked.add(movie.ranking);
+        }
+      });
+      
+      setBookmarkedMovies(bookmarked);
+    }
+  }, []);
+  
+  // Handle bookmark changes
+  const handleBookmarkChange = (movieId: number, isBookmarked: boolean) => {
+    setBookmarkedMovies(prev => {
+      const updated = new Set(prev);
+      if (isBookmarked) {
+        updated.add(movieId);
+      } else {
+        updated.delete(movieId);
+      }
+      return updated;
+    });
+  };
 
-  // Filter movies based on selected tier and search query
+  // Filter movies based on selected tier, watchlist, and search query
   const filteredMovies = movies.filter((movie: Movie) => {
+    // Filter by watchlist
+    if (isWatchlistSelected) {
+      if (!bookmarkedMovies.has(movie.ranking)) {
+        return false;
+      }
+    }
     // Filter by tier
-    if (selectedTier !== null && movie.tier !== selectedTier) {
+    else if (selectedTier !== null && movie.tier !== selectedTier) {
       return false;
     }
     
@@ -47,10 +85,11 @@ export default function Home() {
 
   // Get the title for the current view
   const getContentTitle = () => {
-    if (selectedTier !== null) {
+    if (isWatchlistSelected) {
+      return "Your Watchlist";
+    } else if (selectedTier !== null) {
       return `Tier ${selectedTier}: ${tierDescriptions[selectedTier]}`;
-    }
-    if (searchQuery) {
+    } else if (searchQuery) {
       return `Search results for "${searchQuery}"`;
     }
     return "All Nicolas Cage Movies";
@@ -71,7 +110,12 @@ export default function Home() {
           <div className="md:w-64 flex-shrink-0">
             <div className="sticky top-6 space-y-6 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-hidden">
               <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-              <TierFilter selectedTier={selectedTier} onTierChange={setSelectedTier} />
+              <TierFilter 
+                selectedTier={selectedTier} 
+                onTierChange={setSelectedTier}
+                isWatchlistSelected={isWatchlistSelected}
+                onWatchlistChange={setIsWatchlistSelected}
+              />
             </div>
           </div>
           
@@ -81,7 +125,7 @@ export default function Home() {
               <div className="flex justify-between items-center">
                 <AnimatePresence mode="wait">
                   <motion.h2 
-                    key={`title-${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${searchQuery}`}
+                    key={`title-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${searchQuery}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -115,7 +159,7 @@ export default function Home() {
             <AnimatePresence mode="wait">
               {sortedMovies.length > 0 ? (
                 <motion.div
-                  key={`content-${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${searchQuery}`}
+                  key={`content-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${searchQuery}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -124,6 +168,7 @@ export default function Home() {
                   <MovieGrid 
                     movies={sortedMovies} 
                     onMovieClick={setSelectedMovie}
+                    onBookmarkChange={handleBookmarkChange}
                   />
                 </motion.div>
               ) : (
@@ -135,7 +180,11 @@ export default function Home() {
                   transition={{ duration: 0.3 }}
                   className="text-center py-12"
                 >
-                  <p className="text-gray-500">No movies found matching your criteria.</p>
+                  <p className="text-gray-500">
+                    {isWatchlistSelected 
+                      ? "Your watchlist is empty. Bookmark some movies to add them here."
+                      : "No movies found matching your criteria."}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
