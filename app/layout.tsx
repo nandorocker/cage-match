@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cagey - Nicolas Cage Movie Rankings",
-  description: "Explore and rank Nicolas Cage's extensive filmography",
+  title: "Cage Match",
+  description: "The ultimate site for Nicolas Cage rankings, watchlists, and deep dives",
 };
 
 export default function RootLayout({
