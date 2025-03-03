@@ -18,13 +18,20 @@ interface Movie {
 
 // Read the JSON file
 const jsonPath = path.join(__dirname, '../../cage_movies.json');
-const outputPath = path.join(__dirname, '../src/lib/movies.ts');
+const srcOutputPath = path.join(__dirname, '../src/lib/movies.ts');
+const rootOutputPath = path.join(__dirname, '../lib/movies.ts');
 
 try {
-  // Create the data directory if it doesn't exist
-  const dataDir = path.join(__dirname, '../src/lib');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  // Create the data directories if they don't exist
+  const srcDataDir = path.join(__dirname, '../src/lib');
+  const rootDataDir = path.join(__dirname, '../lib');
+  
+  if (!fs.existsSync(srcDataDir)) {
+    fs.mkdirSync(srcDataDir, { recursive: true });
+  }
+  
+  if (!fs.existsSync(rootDataDir)) {
+    fs.mkdirSync(rootDataDir, { recursive: true });
   }
 
   // Read and parse the JSON file
@@ -63,9 +70,11 @@ export const tierDescriptions: Record<number, string> = {
 };
 `;
 
-  // Write the TypeScript file
-  fs.writeFileSync(outputPath, tsContent);
-  console.log(`Successfully converted JSON to TypeScript at ${outputPath}`);
+  // Write the TypeScript files to both locations
+  fs.writeFileSync(srcOutputPath, tsContent);
+  fs.writeFileSync(rootOutputPath, tsContent);
+  console.log(`Successfully converted JSON to TypeScript at ${srcOutputPath}`);
+  console.log(`Successfully converted JSON to TypeScript at ${rootOutputPath}`);
 } catch (error) {
   console.error('Error converting JSON to TypeScript:', error);
 } 
