@@ -8,36 +8,29 @@ import { Button } from "@/components/ui/button";
 interface MovieCardProps {
   movie: Movie;
   onBookmarkChange?: (movieId: number, isBookmarked: boolean) => void;
+  isBookmarked?: boolean; // Add prop to receive bookmark state from parent
 }
 
-export function MovieCard({ movie, onBookmarkChange }: MovieCardProps) {
+export function MovieCard({ movie, onBookmarkChange, isBookmarked: externalIsBookmarked }: MovieCardProps) {
   const tierColorClass = tierColors[movie.tier] || "bg-gray-100 text-gray-800 border-gray-300";
   const textColorClass = tierColorClass.split(' ')[1] || "text-gray-800";
   
-  // Initialize with a default state (false) for server-side rendering
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  // Initialize with the external state if provided, otherwise false
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(externalIsBookmarked || false);
   
-  // Load bookmark state from localStorage only on the client side after initial render
+  // Update internal state when external state changes
   useEffect(() => {
-    // This code only runs on the client
-    const saved = localStorage.getItem(`bookmarked-${movie.ranking}`);
-    if (saved === 'true') {
-      setIsBookmarked(true);
+    if (externalIsBookmarked !== undefined) {
+      setIsBookmarked(externalIsBookmarked);
     }
-  }, [movie.ranking]);
+  }, [externalIsBookmarked]);
   
-  // Update localStorage when bookmark state changes
-  useEffect(() => {
-    // Skip the first render (which happens on both server and client)
-    const isBrowser = typeof window !== 'undefined';
-    if (isBrowser) {
-      localStorage.setItem(`bookmarked-${movie.ranking}`, isBookmarked.toString());
-    }
-  }, [isBookmarked, movie.ranking]);
-  
+  // Handle bookmark click
   const handleBookmarkClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click event
     const newState = !isBookmarked;
+    
+    // Update internal state
     setIsBookmarked(newState);
     
     // Call the callback if provided

@@ -20,23 +20,35 @@ export default function Home() {
   
   // Load bookmarked movies from localStorage on initial render
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const bookmarked = new Set<number>();
-      
-      // Check each movie if it's bookmarked
-      movies.forEach(movie => {
-        const isBookmarked = localStorage.getItem(`bookmarked-${movie.ranking}`) === 'true';
-        if (isBookmarked) {
-          bookmarked.add(movie.ranking);
-        }
-      });
-      
-      setBookmarkedMovies(bookmarked);
-    }
+    // This function should only run in the browser
+    if (typeof window === 'undefined') return;
+    
+    console.log("Loading bookmarked movies from localStorage");
+    const bookmarked = new Set<number>();
+    
+    // Check each movie if it's bookmarked
+    movies.forEach(movie => {
+      const isBookmarked = localStorage.getItem(`bookmarked-${movie.ranking}`);
+      console.log(`Movie ${movie.ranking}: ${isBookmarked}`);
+      if (isBookmarked === 'true') {
+        bookmarked.add(movie.ranking);
+      }
+    });
+    
+    console.log(`Found ${bookmarked.size} bookmarked movies`);
+    setBookmarkedMovies(bookmarked);
   }, []);
   
   // Handle bookmark changes
   const handleBookmarkChange = (movieId: number, isBookmarked: boolean) => {
+    console.log(`Bookmark change: Movie ${movieId} is now ${isBookmarked ? 'bookmarked' : 'not bookmarked'}`);
+    
+    // Update localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`bookmarked-${movieId}`, isBookmarked.toString());
+    }
+    
+    // Update state
     setBookmarkedMovies(prev => {
       const updated = new Set(prev);
       if (isBookmarked) {
@@ -114,6 +126,12 @@ export default function Home() {
   useEffect(() => {
     setSectionSearchQuery("");
   }, [selectedTier, isWatchlistSelected, globalSearchQuery]);
+
+  // Debug output for bookmarked movies
+  useEffect(() => {
+    console.log(`Bookmarked movies count: ${bookmarkedMovies.size}`);
+    console.log(`Bookmarked movies: ${Array.from(bookmarkedMovies).join(', ')}`);
+  }, [bookmarkedMovies]);
 
   return (
     <main className="min-h-screen p-6 md:p-12">
@@ -205,6 +223,7 @@ export default function Home() {
                     movies={sortedMovies} 
                     onMovieClick={setSelectedMovie}
                     onBookmarkChange={handleBookmarkChange}
+                    bookmarkedMovies={bookmarkedMovies}
                   />
                 </motion.div>
               ) : (
