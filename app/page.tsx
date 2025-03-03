@@ -247,9 +247,9 @@ export default function Home() {
     <main className="min-h-screen p-6 md:p-12">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Nicolas Cage Movies</h1>
+          <h1 className="text-4xl font-bold mb-2">CageMatch</h1>
           <p className="text-gray-600">
-            Explore all {movies.length} Nicolas Cage movies, ranked from best to worst.
+          The ultimate site for Nicolas Cage rankings, watchlists, and deep dives. Explore all {movies.length} Nicolas Cage movies. Credit to <a href="https://www.richardranks.com/2024/07/unlocking-cage-nicolas-cage-films-ranked.html?m=1" target="_blank">Richard Ranks</a> for the original list.
           </p>
         </header>
         
