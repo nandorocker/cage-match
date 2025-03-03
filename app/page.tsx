@@ -9,8 +9,11 @@ import { MovieDetail } from "@/components/movie-detail";
 import { SettingsContent } from "@/components/settings-content";
 import { ArrowUpDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [sectionSearchQuery, setSectionSearchQuery] = useState("");
@@ -19,6 +22,62 @@ export default function Home() {
   const [isWatchlistSelected, setIsWatchlistSelected] = useState(false);
   const [bookmarkedMovies, setBookmarkedMovies] = useState<Set<number>>(new Set());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  // Update state based on URL on initial load and URL changes
+  useEffect(() => {
+    const path = pathname.slice(1); // Remove leading slash
+    if (path === "") {
+      setSelectedTier(null);
+      setIsWatchlistSelected(false);
+      setIsSettingsOpen(false);
+    } else if (path.startsWith("tier-")) {
+      const tier = parseInt(path.replace("tier-", ""), 10);
+      if (!isNaN(tier) && tier >= 1 && tier <= 6) {
+        setSelectedTier(tier);
+        setIsWatchlistSelected(false);
+        setIsSettingsOpen(false);
+      }
+    } else if (path === "watchlist") {
+      setIsWatchlistSelected(true);
+      setSelectedTier(null);
+      setIsSettingsOpen(false);
+    } else if (path === "settings") {
+      setIsSettingsOpen(true);
+      setIsWatchlistSelected(false);
+      setSelectedTier(null);
+    }
+  }, [pathname]);
+  
+  // Handle tier changes with URL updates
+  const handleTierChange = (tier: number | null) => {
+    setSelectedTier(tier);
+    if (tier === null) {
+      router.push("/");
+    } else {
+      router.push(`/tier-${tier}`);
+    }
+  };
+  
+  // Handle watchlist selection with URL updates
+  const handleWatchlistChange = (selected: boolean) => {
+    setIsWatchlistSelected(selected);
+    if (selected) {
+      router.push("/watchlist");
+    } else {
+      router.push("/");
+    }
+  };
+  
+  // Handle settings with URL updates
+  const handleSettingsClick = () => {
+    setIsSettingsOpen(true);
+    router.push("/settings");
+  };
+  
+  const handleCloseSettings = () => {
+    setIsSettingsOpen(false);
+    router.push("/");
+  };
   
   // Load bookmarked movies from localStorage on initial render
   useEffect(() => {
@@ -172,12 +231,12 @@ export default function Home() {
               />
               <TierFilter 
                 selectedTier={selectedTier} 
-                onTierChange={setSelectedTier}
+                onTierChange={handleTierChange}
                 isWatchlistSelected={isWatchlistSelected}
-                onWatchlistChange={setIsWatchlistSelected}
+                onWatchlistChange={handleWatchlistChange}
                 isSettingsOpen={isSettingsOpen}
-                onSettingsClick={() => setIsSettingsOpen(true)}
-                onCloseSettings={() => setIsSettingsOpen(false)}
+                onSettingsClick={handleSettingsClick}
+                onCloseSettings={handleCloseSettings}
               />
             </div>
           </div>
@@ -242,7 +301,7 @@ export default function Home() {
                   transition={{ duration: 0.3 }}
                 >
                   <SettingsContent 
-                    onClose={() => setIsSettingsOpen(false)}
+                    onClose={handleCloseSettings}
                     onResetWatchlist={handleResetWatchlist}
                   />
                 </motion.div>
