@@ -14,6 +14,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Cage Match",
+  icons: {
+    icon: [
+      {
+        url: "/favicon-16x16.ico",
+        sizes: "16x16",
+        type: "image/x-icon"
+      },
+      {
+        url: "/favicon-32x32.ico",
+        sizes: "32x32",
+        type: "image/x-icon"
+      }
+    ]
+  },
   description: "The ultimate site for Nicolas Cage rankings, watchlists, and deep dives",
 };
 

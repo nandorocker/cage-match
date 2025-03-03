@@ -85,7 +85,7 @@ export function TierFilter({
         <TabsList className="flex flex-col h-auto space-y-1 bg-transparent w-full">
           <TabsTrigger 
             value="all" 
-            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
+            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left transition-transform hover:translate-x-1"
           >
             All Tiers
           </TabsTrigger>
@@ -95,7 +95,7 @@ export function TierFilter({
             <TabsTrigger 
               key={tier} 
               value={tier.toString()} 
-              className={`justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left ${getColorClasses(tier)}`}
+              className={`justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left transition-transform hover:translate-x-1 ${getColorClasses(tier)}`}
             >
               <div className="flex flex-col items-start w-full overflow-hidden">
                 <span className="font-medium truncate w-full">Tier {tier}</span>
@@ -110,7 +110,7 @@ export function TierFilter({
           {/* Watchlist tab */}
           <TabsTrigger 
             value="watchlist" 
-            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
+            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left transition-transform hover:translate-x-1"
           >
             <div className="flex items-center gap-2">
               <Bookmark className={`h-4 w-4 ${isWatchlistSelected && !isSettingsOpen ? 'fill-blue-500 text-blue-500' : ''}`} />
@@ -121,7 +121,7 @@ export function TierFilter({
           {/* Settings button - now a TabsTrigger instead of a button */}
           <TabsTrigger 
             value="settings" 
-            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
+            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left transition-transform hover:translate-x-1"
           >
             <div className="flex items-center gap-2">
               <Settings className={`h-4 w-4 ${isSettingsOpen ? 'text-blue-500' : ''}`} />
