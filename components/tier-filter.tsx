@@ -61,8 +61,8 @@ export function TierFilter({
       onSettingsClick();
     } else if (value === "watchlist") {
       onWatchlistChange(true);
-      onTierChange(null);
     } else {
+      // When switching to a tier or "all", ensure watchlist is off
       onWatchlistChange(false);
       
       if (value === "all") {
