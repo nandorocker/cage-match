@@ -1,0 +1,8 @@
+---
+description: Rules about when and how to commit to repo
+globs: 
+alwaysApply: false
+---
+- Don't commit to git until I'm satisfied with a feature
+- I will explicitly request for you to commit
+- Condense your commands as much as possible when committing to make it faster
