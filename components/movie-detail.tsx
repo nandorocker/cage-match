@@ -2,6 +2,7 @@ import { Movie, tierColors } from "@/lib/movies";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Film, Star, Award } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface MovieDetailProps {
   movie: Movie;
@@ -10,10 +11,30 @@ interface MovieDetailProps {
 
 export function MovieDetail({ movie, onClose }: MovieDetailProps) {
   const tierColorClass = tierColors[movie.tier] || "bg-gray-100 text-gray-800 border-gray-300";
+  const [isShowing, setIsShowing] = useState(false);
   
+  useEffect(() => {
+    setIsShowing(true);
+  }, []);
+
+  const handleClose = () => {
+    setIsShowing(false);
+    setTimeout(onClose, 200); // Match the duration of the transition
+  };
+
   return (
-    <div className="fixed inset-0 backdrop-blur-[3px] bg-zinc-500/50 dark:bg-zinc-900/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className={`fixed inset-0 backdrop-blur-[3px] bg-zinc-500/50 dark:bg-zinc-900/50 flex items-center justify-center z-50 p-4 transition-all duration-200 ${
+        isShowing ? "opacity-100" : "opacity-0"
+      }`} 
+      onClick={handleClose}
+    >
+      <div 
+        className={`bg-card rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto transition-all duration-200 ${
+          isShowing ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -37,7 +58,7 @@ export function MovieDetail({ movie, onClose }: MovieDetailProps) {
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <Button variant="ghost" size="icon" onClick={handleClose}>
               <X className="h-5 w-5" />
             </Button>
           </div>
