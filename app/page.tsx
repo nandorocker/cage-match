@@ -13,18 +13,31 @@ import { AnimatePresence, motion } from "framer-motion";
 export default function Home() {
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
-  const [sectionSearchQuery, setSectionSearchQuery] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("");
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [sortAscending, setSortAscending] = useState(false); // Default to worst to best (descending)
+  const [sortAscending, setSortAscending] = useState(false);
   const [isWatchlistSelected, setIsWatchlistSelected] = useState(false);
   const [bookmarkedMovies, setBookmarkedMovies] = useState<Set<number>>(new Set());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
+  // Handle global search
+  const handleGlobalSearch = (query: string) => {
+    setGlobalSearchQuery(query);
+    if (query) {
+      // When starting a global search, clear other section states
+      setSelectedTier(null);
+      setIsWatchlistSelected(false);
+      setIsSettingsOpen(false);
+    }
+    // Reset section filter when changing search
+    setSectionFilter("");
+  };
+
   // Load state from URL on initial render
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const hash = window.location.hash.slice(1); // Remove the # character
+    const hash = window.location.hash.slice(1);
     if (!hash) return;
 
     try {
@@ -37,24 +50,31 @@ export default function Home() {
           setIsSettingsOpen(true);
           setIsWatchlistSelected(false);
           setSelectedTier(null);
+          setGlobalSearchQuery(""); // Clear search when changing sections
         } else if (section === 'watchlist') {
           setIsWatchlistSelected(true);
           setIsSettingsOpen(false);
           setSelectedTier(null);
+          setGlobalSearchQuery(""); // Clear search when changing sections
         } else if (section.startsWith('tier-')) {
           const tier = Number(section.replace('tier-', ''));
           if (!isNaN(tier)) {
             setSelectedTier(tier);
             setIsWatchlistSelected(false);
             setIsSettingsOpen(false);
+            setGlobalSearchQuery(""); // Clear search when changing sections
           }
         }
       }
 
-      // Load search query
+      // Load search query - only if no section is specified
       const search = params.get('search');
-      if (search) {
+      if (search && !section) {
         setGlobalSearchQuery(search);
+        // Clear other section states when loading a search
+        setSelectedTier(null);
+        setIsWatchlistSelected(false);
+        setIsSettingsOpen(false);
       }
 
       // Load sort direction
@@ -80,12 +100,12 @@ export default function Home() {
       params.set('section', 'watchlist');
     } else if (selectedTier !== null) {
       params.set('section', `tier-${selectedTier}`);
-    }
-
-    // Add other parameters
-    if (globalSearchQuery) {
+    } else if (globalSearchQuery) {
+      // Use search as its own section
       params.set('search', globalSearchQuery);
     }
+
+    // Add sort parameter if needed
     if (sortAscending) {
       params.set('sort', 'asc');
     }
@@ -154,20 +174,9 @@ export default function Home() {
     setBookmarkedMovies(new Set());
   };
 
-  // First apply global filters (tier, watchlist, global search)
+  // First apply global filters
   const globallyFilteredMovies = movies.filter((movie: Movie) => {
-    // Filter by watchlist
-    if (isWatchlistSelected) {
-      if (!bookmarkedMovies.has(movie.ranking)) {
-        return false;
-      }
-    }
-    // Filter by tier
-    else if (selectedTier !== null && movie.tier !== selectedTier) {
-      return false;
-    }
-    
-    // Filter by global search query
+    // If there's a global search, it takes precedence over section filters
     if (globalSearchQuery) {
       const query = globalSearchQuery.toLowerCase();
       return (
@@ -175,21 +184,26 @@ export default function Home() {
         (movie.description && movie.description.toLowerCase().includes(query))
       );
     }
+
+    // Otherwise, apply section filters
+    if (isWatchlistSelected) {
+      return bookmarkedMovies.has(movie.ranking);
+    } else if (selectedTier !== null) {
+      return movie.tier === selectedTier;
+    }
     
     return true;
   });
 
-  // Then apply section search filter
+  // Then apply section filter if any
   const filteredMovies = globallyFilteredMovies.filter((movie: Movie) => {
-    // Filter by section search query
-    if (sectionSearchQuery) {
-      const query = sectionSearchQuery.toLowerCase();
+    if (sectionFilter) {
+      const query = sectionFilter.toLowerCase();
       return (
         movie.title.toLowerCase().includes(query) ||
         (movie.description && movie.description.toLowerCase().includes(query))
       );
     }
-    
     return true;
   });
 
@@ -218,10 +232,10 @@ export default function Home() {
     return "All Nicolas Cage Movies";
   };
 
-  // Clear section search when global filters change
+  // Reset section filter when changing sections or search
   useEffect(() => {
-    setSectionSearchQuery("");
-  }, [selectedTier, isWatchlistSelected, globalSearchQuery]);
+    setSectionFilter("");
+  }, [selectedTier, isWatchlistSelected, isSettingsOpen, globalSearchQuery]);
 
   // Debug output for bookmarked movies
   useEffect(() => {
@@ -245,7 +259,7 @@ export default function Home() {
             <div className="sticky top-6 space-y-6 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-hidden">
               <SearchBar 
                 searchQuery={globalSearchQuery} 
-                onSearchChange={setGlobalSearchQuery} 
+                onSearchChange={handleGlobalSearch}
                 label="Global Search" 
                 placeholder="Search all movies..."
               />
@@ -281,8 +295,8 @@ export default function Home() {
                 {!isSettingsOpen && (
                   <div className="flex flex-col md:flex-row items-end md:items-center gap-3 w-full md:w-auto">
                     <SearchBar 
-                      searchQuery={sectionSearchQuery} 
-                      onSearchChange={setSectionSearchQuery} 
+                      searchQuery={sectionFilter} 
+                      onSearchChange={setSectionFilter} 
                       label="" 
                       placeholder="Filter current section..."
                       className="w-full md:w-auto flex justify-end"
@@ -327,7 +341,7 @@ export default function Home() {
                 </motion.div>
               ) : sortedMovies.length > 0 ? (
                 <motion.div
-                  key={`content-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}-section-${sectionSearchQuery}`}
+                  key={`content-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}-section-${sectionFilter}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
