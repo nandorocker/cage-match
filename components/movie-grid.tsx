@@ -6,9 +6,10 @@ interface MovieGridProps {
   movies: Movie[];
   onMovieClick: (movie: Movie) => void;
   onBookmarkChange?: (movieId: number, isBookmarked: boolean) => void;
+  bookmarkedMovies?: Set<number>;
 }
 
-export function MovieGrid({ movies, onMovieClick, onBookmarkChange }: MovieGridProps) {
+export function MovieGrid({ movies, onMovieClick, onBookmarkChange, bookmarkedMovies = new Set() }: MovieGridProps) {
   return (
     <AnimatePresence mode="wait">
       <motion.div 
@@ -28,6 +29,7 @@ export function MovieGrid({ movies, onMovieClick, onBookmarkChange }: MovieGridP
             <MovieCard 
               movie={movie} 
               onBookmarkChange={onBookmarkChange}
+              isBookmarked={bookmarkedMovies.has(movie.ranking)}
             />
           </div>
         ))}
