@@ -1,101 +1,85 @@
-# Nicolas Cage Movie Scraper
+# Cagey - Nicolas Cage Movie Explorer
 
-This script scrapes Nicolas Cage movie rankings from [Richard Ranks' blog post](https://www.richardranks.com/2024/07/unlocking-cage-nicolas-cage-films-ranked.html?m=1) and saves the data as a JSON file.
+A web application for exploring and ranking Nicolas Cage movies, with a Python scraper for collecting movie data and a Next.js web interface for browsing and filtering the movies.
 
-## Requirements
+## Project Structure
 
-- Python 3.6+
-- Required packages: requests, beautifulsoup4
+- `/python-app` - Python scraper for collecting Nicolas Cage movie data
+- `/` - Next.js web application for browsing and filtering movies
 
-## Installation
+## Getting Started
 
-1. Clone this repository or download the script files.
-2. Install the required packages:
+### Prerequisites
 
+- Node.js 18+ and pnpm
+- Python 3.8+ with pip
+
+### Installation
+
+1. Clone the repository:
 ```bash
+git clone https://github.com/yourusername/cagey.git
+cd cagey
+```
+
+2. Install JavaScript dependencies:
+```bash
+pnpm install
+```
+
+3. Install Python dependencies:
+```bash
+cd python-app
 pip install -r requirements.txt
+cd ..
 ```
 
-## Usage
+### Running the Application
 
-### Basic Usage
+#### Scraping Movie Data
 
-Run the main script with:
+To scrape the latest Nicolas Cage movie data:
 
 ```bash
-python scrape_cage_movies.py
+pnpm run scrape
 ```
 
-The script will:
-1. Scrape the website for Nicolas Cage movie rankings
-2. Extract the following information for each movie:
-   - Ranking
-   - Tier (if available)
-   - Movie title
-   - Movie year
-   - Movie description
-3. Save the data to a file named `cage_movies.json` in the current directory
+This will create or update the `python-app/cage_movies.json` file.
 
-### Test Script
+#### Converting Data for the Web UI
 
-You can also run the test script to see a summary of the scraped data:
+After scraping, convert the JSON data to TypeScript:
 
 ```bash
-python test_scraper.py
+pnpm run convert
 ```
 
-This will:
-1. Run the scraper
-2. Save the results to `cage_movies.json`
-3. Display statistics about the scraped data, including:
-   - Total number of movies found
-   - Number of movies in each tier
-   - Details of the top 5 and bottom 5 movies
+#### Running the Web UI
 
-### View Results
-
-To view the scraped data in a more readable format, run:
+Start the development server:
 
 ```bash
-python view_results.py
+pnpm run dev
 ```
 
-This interactive script will:
-1. Display all movies grouped by tier
-2. Allow you to enter a ranking number to see detailed information about a specific movie
-3. Continue until you choose to quit (by entering 'q')
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can also specify a different JSON file to view:
+## Features
 
-```bash
-python view_results.py path/to/your/file.json
-```
+- **Python Scraper**: Collects Nicolas Cage movie data including titles, years, descriptions, and rankings
+- **Web UI**: 
+  - Browse all Nicolas Cage movies
+  - Filter movies by tier
+  - Search movies by title or description
+  - View detailed information about each movie
+  - Add movies to your watchlist
 
-## Output Format
+## Technologies Used
 
-The output JSON file contains an array of movie objects, each with the following structure:
+- **Backend**: Python with BeautifulSoup for web scraping
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui components
+- **State Management**: React hooks and localStorage for watchlist functionality
 
-```json
-{
-    "ranking": 1,
-    "tier": "S",
-    "title": "Movie Title",
-    "year": 2000,
-    "description": "Description of the movie..."
-}
-```
+## License
 
-## Troubleshooting
-
-If the script fails to scrape the data, it could be due to:
-- Website structure changes
-- Network connectivity issues
-- Website blocking the scraper
-
-In such cases, check your internet connection and verify that the website structure hasn't changed.
-
-## Notes
-
-- The script is designed to handle the specific structure of the blog post as of July 2024.
-- If the blog post is updated or the structure changes, the script may need to be modified.
-- The script respects website resources by not making excessive requests. 
+This project is licensed under the MIT License - see the LICENSE file for details.

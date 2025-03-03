@@ -1,6 +1,0 @@
----
-description: The paths of the server
-globs: 
-alwaysApply: false
----
-- When doing anything to the web UI, use the path `/web-ui/`

@@ -17,7 +17,7 @@ interface Movie {
 }
 
 // Read the JSON file
-const jsonPath = path.join(__dirname, '../../cage_movies.json');
+const jsonPath = path.join(__dirname, '../python-app/cage_movies.json');
 const srcOutputPath = path.join(__dirname, '../src/lib/movies.ts');
 const rootOutputPath = path.join(__dirname, '../lib/movies.ts');
 
