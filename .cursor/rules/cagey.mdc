@@ -1,0 +1,10 @@
+---
+description: Keeping the output concise for better usability
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- Do not restart the server unless it's really necessary
+- Keep comments to a minimum after you finish a task. No need for a complete summary.

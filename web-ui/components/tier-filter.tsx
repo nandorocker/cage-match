@@ -1,12 +1,20 @@
 import { tierDescriptions, tierColors } from "@/lib/movies";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bookmark } from "lucide-react";
 
 interface TierFilterProps {
   selectedTier: number | null;
   onTierChange: (tier: number | null) => void;
+  isWatchlistSelected: boolean;
+  onWatchlistChange: (selected: boolean) => void;
 }
 
-export function TierFilter({ selectedTier, onTierChange }: TierFilterProps) {
+export function TierFilter({ 
+  selectedTier, 
+  onTierChange, 
+  isWatchlistSelected, 
+  onWatchlistChange 
+}: TierFilterProps) {
   // Get tiers and sort them in descending order (6 to 1)
   const tiers = Object.keys(tierDescriptions)
     .map(Number)
@@ -35,6 +43,11 @@ export function TierFilter({ selectedTier, onTierChange }: TierFilterProps) {
         defaultValue={selectedTier?.toString() || "all"} 
         orientation="vertical"
         onValueChange={(value) => {
+          // Reset watchlist selection when selecting a tier
+          if (isWatchlistSelected) {
+            onWatchlistChange(false);
+          }
+          
           if (value === "all") {
             onTierChange(null);
           } else {
@@ -64,6 +77,28 @@ export function TierFilter({ selectedTier, onTierChange }: TierFilterProps) {
           ))}
         </TabsList>
       </Tabs>
+      
+      {/* Watchlist section - separate from tier filters */}
+      <div className="mt-6 border-t pt-4">
+        <button 
+          className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+            isWatchlistSelected ? 'bg-gray-200' : 'hover:bg-gray-100'
+          }`}
+          onClick={() => {
+            // Toggle watchlist selection
+            const newState = !isWatchlistSelected;
+            onWatchlistChange(newState);
+            
+            // Reset tier selection when selecting watchlist
+            if (newState && selectedTier !== null) {
+              onTierChange(null);
+            }
+          }}
+        >
+          <Bookmark className={`h-4 w-4 ${isWatchlistSelected ? 'fill-blue-500 text-blue-500' : ''}`} />
+          <span className="font-medium">Watchlist</span>
+        </button>
+      </div>
     </div>
   );
 } 
