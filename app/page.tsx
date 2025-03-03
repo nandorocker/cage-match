@@ -11,7 +11,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 export default function Home() {
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [sectionSearchQuery, setSectionSearchQuery] = useState("");
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [sortAscending, setSortAscending] = useState(false); // Default to worst to best (descending)
   const [isWatchlistSelected, setIsWatchlistSelected] = useState(false);
@@ -47,8 +48,8 @@ export default function Home() {
     });
   };
 
-  // Filter movies based on selected tier, watchlist, and search query
-  const filteredMovies = movies.filter((movie: Movie) => {
+  // First apply global filters (tier, watchlist, global search)
+  const globallyFilteredMovies = movies.filter((movie: Movie) => {
     // Filter by watchlist
     if (isWatchlistSelected) {
       if (!bookmarkedMovies.has(movie.ranking)) {
@@ -60,9 +61,23 @@ export default function Home() {
       return false;
     }
     
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    // Filter by global search query
+    if (globalSearchQuery) {
+      const query = globalSearchQuery.toLowerCase();
+      return (
+        movie.title.toLowerCase().includes(query) ||
+        (movie.description && movie.description.toLowerCase().includes(query))
+      );
+    }
+    
+    return true;
+  });
+
+  // Then apply section search filter
+  const filteredMovies = globallyFilteredMovies.filter((movie: Movie) => {
+    // Filter by section search query
+    if (sectionSearchQuery) {
+      const query = sectionSearchQuery.toLowerCase();
       return (
         movie.title.toLowerCase().includes(query) ||
         (movie.description && movie.description.toLowerCase().includes(query))
@@ -89,11 +104,16 @@ export default function Home() {
       return "Your Watchlist";
     } else if (selectedTier !== null) {
       return `Tier ${selectedTier}: ${tierDescriptions[selectedTier]}`;
-    } else if (searchQuery) {
-      return `Search results for "${searchQuery}"`;
+    } else if (globalSearchQuery) {
+      return `Search results for "${globalSearchQuery}"`;
     }
     return "All Nicolas Cage Movies";
   };
+
+  // Clear section search when global filters change
+  useEffect(() => {
+    setSectionSearchQuery("");
+  }, [selectedTier, isWatchlistSelected, globalSearchQuery]);
 
   return (
     <main className="min-h-screen p-6 md:p-12">
@@ -109,7 +129,12 @@ export default function Home() {
           {/* Sidebar */}
           <div className="md:w-64 flex-shrink-0">
             <div className="sticky top-6 space-y-6 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-hidden">
-              <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+              <SearchBar 
+                searchQuery={globalSearchQuery} 
+                onSearchChange={setGlobalSearchQuery} 
+                label="Global Search" 
+                placeholder="Search all movies..."
+              />
               <TierFilter 
                 selectedTier={selectedTier} 
                 onTierChange={setSelectedTier}
@@ -122,10 +147,10 @@ export default function Home() {
           {/* Main content */}
           <div className="flex-1">
             <div className="sticky top-0 z-10 pt-4 pb-3 bg-white mb-4">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <AnimatePresence mode="wait">
                   <motion.h2 
-                    key={`title-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${searchQuery}`}
+                    key={`title-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -136,30 +161,41 @@ export default function Home() {
                   </motion.h2>
                 </AnimatePresence>
                 
-                <button 
-                  onClick={() => setSortAscending(!sortAscending)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  <ArrowUpDown className="w-4 h-4" />
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={sortAscending ? "best-to-worst" : "worst-to-best"}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {sortAscending ? "Best to Worst" : "Worst to Best"}
-                    </motion.span>
-                  </AnimatePresence>
-                </button>
+                <div className="flex flex-col md:flex-row items-end md:items-center gap-3 w-full md:w-auto">
+                  <SearchBar 
+                    searchQuery={sectionSearchQuery} 
+                    onSearchChange={setSectionSearchQuery} 
+                    label="" 
+                    placeholder="Filter current section..."
+                    className="w-full md:w-auto flex justify-end"
+                    compact={true}
+                  />
+                  
+                  <button 
+                    onClick={() => setSortAscending(!sortAscending)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors whitespace-nowrap"
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={sortAscending ? "best-to-worst" : "worst-to-best"}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {sortAscending ? "Best to Worst" : "Worst to Best"}
+                      </motion.span>
+                    </AnimatePresence>
+                  </button>
+                </div>
               </div>
             </div>
             
             <AnimatePresence mode="wait">
               {sortedMovies.length > 0 ? (
                 <motion.div
-                  key={`content-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${searchQuery}`}
+                  key={`content-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}-section-${sectionSearchQuery}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
