@@ -7,29 +7,59 @@ interface TierFilterProps {
 }
 
 export function TierFilter({ selectedTier, onTierChange }: TierFilterProps) {
-  const tiers = Object.keys(tierDescriptions).map(Number);
+  // Get tiers and sort them in descending order (6 to 1)
+  const tiers = Object.keys(tierDescriptions)
+    .map(Number)
+    .sort((a, b) => b - a);
+  
+  // Extract color classes for each tier
+  const getColorClasses = (tier: number) => {
+    const colorClass = tierColors[tier];
+    if (!colorClass) return "";
+    
+    // Extract just the text color from the full class string
+    const textColorMatch = colorClass.match(/text-[a-z]+-\d+/);
+    const textColor = textColorMatch ? textColorMatch[0] : "";
+    
+    // Extract just the border color from the full class string
+    const borderColorMatch = colorClass.match(/border-[a-z]+-\d+/);
+    const borderColor = borderColorMatch ? borderColorMatch[0] : "";
+    
+    return `${textColor} border-l-4 ${borderColor} pl-2`;
+  };
   
   return (
-    <div className="mb-6">
-      <h2 className="text-lg font-semibold mb-2">Filter by Tier</h2>
-      <Tabs defaultValue={selectedTier?.toString() || "all"} onValueChange={(value) => {
-        if (value === "all") {
-          onTierChange(null);
-        } else {
-          onTierChange(Number(value));
-        }
-      }}>
-        <TabsList className="grid grid-cols-7">
-          <TabsTrigger value="all" className="text-sm">
-            All
+    <div className="w-full">
+      <h2 className="text-lg font-semibold mb-3">Filter by Tier</h2>
+      <Tabs 
+        defaultValue={selectedTier?.toString() || "all"} 
+        orientation="vertical"
+        onValueChange={(value) => {
+          if (value === "all") {
+            onTierChange(null);
+          } else {
+            onTierChange(Number(value));
+          }
+        }}
+        className="w-full"
+      >
+        <TabsList className="flex flex-col h-auto space-y-1 bg-transparent w-full">
+          <TabsTrigger 
+            value="all" 
+            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
+          >
+            All Tiers
           </TabsTrigger>
           {tiers.map((tier) => (
             <TabsTrigger 
               key={tier} 
               value={tier.toString()} 
-              className="text-sm"
+              className={`justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left ${getColorClasses(tier)}`}
             >
-              Tier {tier}
+              <div className="flex flex-col items-start w-full overflow-hidden">
+                <span className="font-medium truncate w-full">Tier {tier}</span>
+                <span className="text-sm truncate w-full">{tierDescriptions[tier].split(':')[0]}</span>
+              </div>
             </TabsTrigger>
           ))}
         </TabsList>
