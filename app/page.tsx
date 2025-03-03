@@ -6,6 +6,7 @@ import { MovieGrid } from "@/components/movie-grid";
 import { TierFilter } from "@/components/tier-filter";
 import { SearchBar } from "@/components/search-bar";
 import { MovieDetail } from "@/components/movie-detail";
+import { SettingsContent } from "@/components/settings-content";
 import { ArrowUpDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -17,6 +18,7 @@ export default function Home() {
   const [sortAscending, setSortAscending] = useState(false); // Default to worst to best (descending)
   const [isWatchlistSelected, setIsWatchlistSelected] = useState(false);
   const [bookmarkedMovies, setBookmarkedMovies] = useState<Set<number>>(new Set());
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Load bookmarked movies from localStorage on initial render
   useEffect(() => {
@@ -58,6 +60,19 @@ export default function Home() {
       }
       return updated;
     });
+  };
+  
+  // Handle reset watchlist
+  const handleResetWatchlist = () => {
+    // Clear all bookmarks from localStorage
+    if (typeof window !== 'undefined') {
+      movies.forEach(movie => {
+        localStorage.removeItem(`bookmarked-${movie.ranking}`);
+      });
+    }
+    
+    // Clear bookmarked movies state
+    setBookmarkedMovies(new Set());
   };
 
   // First apply global filters (tier, watchlist, global search)
@@ -112,7 +127,9 @@ export default function Home() {
 
   // Get the title for the current view
   const getContentTitle = () => {
-    if (isWatchlistSelected) {
+    if (isSettingsOpen) {
+      return "Settings";
+    } else if (isWatchlistSelected) {
       return "Your Watchlist";
     } else if (selectedTier !== null) {
       return `Tier ${selectedTier}: ${tierDescriptions[selectedTier]}`;
@@ -158,6 +175,9 @@ export default function Home() {
                 onTierChange={setSelectedTier}
                 isWatchlistSelected={isWatchlistSelected}
                 onWatchlistChange={setIsWatchlistSelected}
+                isSettingsOpen={isSettingsOpen}
+                onSettingsClick={() => setIsSettingsOpen(true)}
+                onCloseSettings={() => setIsSettingsOpen(false)}
               />
             </div>
           </div>
@@ -168,7 +188,7 @@ export default function Home() {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <AnimatePresence mode="wait">
                   <motion.h2 
-                    key={`title-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}`}
+                    key={`title-${isSettingsOpen ? 'settings' : isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -179,39 +199,54 @@ export default function Home() {
                   </motion.h2>
                 </AnimatePresence>
                 
-                <div className="flex flex-col md:flex-row items-end md:items-center gap-3 w-full md:w-auto">
-                  <SearchBar 
-                    searchQuery={sectionSearchQuery} 
-                    onSearchChange={setSectionSearchQuery} 
-                    label="" 
-                    placeholder="Filter current section..."
-                    className="w-full md:w-auto flex justify-end"
-                    compact={true}
-                  />
-                  
-                  <button 
-                    onClick={() => setSortAscending(!sortAscending)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors whitespace-nowrap"
-                  >
-                    <ArrowUpDown className="w-4 h-4" />
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={sortAscending ? "best-to-worst" : "worst-to-best"}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {sortAscending ? "Best to Worst" : "Worst to Best"}
-                      </motion.span>
-                    </AnimatePresence>
-                  </button>
-                </div>
+                {!isSettingsOpen && (
+                  <div className="flex flex-col md:flex-row items-end md:items-center gap-3 w-full md:w-auto">
+                    <SearchBar 
+                      searchQuery={sectionSearchQuery} 
+                      onSearchChange={setSectionSearchQuery} 
+                      label="" 
+                      placeholder="Filter current section..."
+                      className="w-full md:w-auto flex justify-end"
+                      compact={true}
+                    />
+                    
+                    <button 
+                      onClick={() => setSortAscending(!sortAscending)}
+                      className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors whitespace-nowrap"
+                    >
+                      <ArrowUpDown className="w-4 h-4" />
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={sortAscending ? "best-to-worst" : "worst-to-best"}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {sortAscending ? "Best to Worst" : "Worst to Best"}
+                        </motion.span>
+                      </AnimatePresence>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             
             <AnimatePresence mode="wait">
-              {sortedMovies.length > 0 ? (
+              {isSettingsOpen ? (
+                <motion.div
+                  key="settings"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <SettingsContent 
+                    onClose={() => setIsSettingsOpen(false)}
+                    onResetWatchlist={handleResetWatchlist}
+                  />
+                </motion.div>
+              ) : sortedMovies.length > 0 ? (
                 <motion.div
                   key={`content-${isWatchlistSelected ? 'watchlist' : ''}${selectedTier !== null ? `tier-${selectedTier}` : 'all-tiers'}-search-${globalSearchQuery}-section-${sectionSearchQuery}`}
                   initial={{ opacity: 0 }}

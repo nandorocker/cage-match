@@ -1,19 +1,25 @@
 import { tierDescriptions, tierColors } from "@/lib/movies";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bookmark } from "lucide-react";
+import { Bookmark, Settings } from "lucide-react";
 
 interface TierFilterProps {
   selectedTier: number | null;
   onTierChange: (tier: number | null) => void;
   isWatchlistSelected: boolean;
   onWatchlistChange: (selected: boolean) => void;
+  isSettingsOpen: boolean;
+  onSettingsClick: () => void;
+  onCloseSettings: () => void;
 }
 
 export function TierFilter({ 
   selectedTier, 
   onTierChange, 
   isWatchlistSelected, 
-  onWatchlistChange 
+  onWatchlistChange,
+  isSettingsOpen,
+  onSettingsClick,
+  onCloseSettings
 }: TierFilterProps) {
   // Get tiers and sort them in descending order (6 to 1)
   const tiers = Object.keys(tierDescriptions)
@@ -38,8 +44,33 @@ export function TierFilter({
   
   // Determine the current value for the tabs
   const getCurrentValue = () => {
+    if (isSettingsOpen) return "settings";
     if (isWatchlistSelected) return "watchlist";
     return selectedTier?.toString() || "all";
+  };
+  
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    // If we're in settings mode, close settings first
+    if (isSettingsOpen) {
+      onCloseSettings();
+    }
+    
+    // Then handle the tab change
+    if (value === "settings") {
+      onSettingsClick();
+    } else if (value === "watchlist") {
+      onWatchlistChange(true);
+      onTierChange(null);
+    } else {
+      onWatchlistChange(false);
+      
+      if (value === "all") {
+        onTierChange(null);
+      } else {
+        onTierChange(Number(value));
+      }
+    }
   };
   
   return (
@@ -48,22 +79,7 @@ export function TierFilter({
       <Tabs 
         value={getCurrentValue()}
         orientation="vertical"
-        onValueChange={(value) => {
-          if (value === "watchlist") {
-            // Select watchlist, deselect tier
-            onWatchlistChange(true);
-            onTierChange(null);
-          } else {
-            // Select tier, deselect watchlist
-            onWatchlistChange(false);
-            
-            if (value === "all") {
-              onTierChange(null);
-            } else {
-              onTierChange(Number(value));
-            }
-          }
-        }}
+        onValueChange={handleTabChange}
         className="w-full"
       >
         <TabsList className="flex flex-col h-auto space-y-1 bg-transparent w-full">
@@ -97,8 +113,19 @@ export function TierFilter({
             className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
           >
             <div className="flex items-center gap-2">
-              <Bookmark className={`h-4 w-4 ${isWatchlistSelected ? 'fill-blue-500 text-blue-500' : ''}`} />
+              <Bookmark className={`h-4 w-4 ${isWatchlistSelected && !isSettingsOpen ? 'fill-blue-500 text-blue-500' : ''}`} />
               <span className="font-medium">Watchlist</span>
+            </div>
+          </TabsTrigger>
+          
+          {/* Settings button - now a TabsTrigger instead of a button */}
+          <TabsTrigger 
+            value="settings" 
+            className="justify-start px-3 py-2 text-sm w-full data-[state=active]:bg-gray-200 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Settings className={`h-4 w-4 ${isSettingsOpen ? 'text-blue-500' : ''}`} />
+              <span className="font-medium">Settings</span>
             </div>
           </TabsTrigger>
         </TabsList>

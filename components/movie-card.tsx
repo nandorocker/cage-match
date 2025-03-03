@@ -63,10 +63,10 @@ export function MovieCard({ movie, onBookmarkChange, isBookmarked: externalIsBoo
         </div>
         <CardDescription className="flex items-center gap-2 flex-wrap mt-2">
           {movie.year ? (
-            <div className="flex items-center gap-1">
+            <span className="flex items-center gap-1">
               <Film className="h-4 w-4" />
               <span>{movie.year}</span>
-            </div>
+            </span>
           ) : (
             <span className="text-gray-400">Year unknown</span>
           )}
