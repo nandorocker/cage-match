@@ -34,15 +34,33 @@ def scrape_cage_movies():
         current_tier = None
         all_elements = content.find_all(['h1', 'h2', 'h3', 'h4', 'p'])
         
+        # Map tier numbers to tier names based on the blog post
+        tier_mapping = {
+            6: "For Cage Completionists Only",
+            5: "Decent Cage Movies",
+            4: "Good Cage Movies",
+            3: "Great Cage Movies",
+            2: "Excellent Cage Movies",
+            1: "The 25 Most Essential Cage Movies"
+        }
+        
         # Find all headings which likely contain the movie titles and rankings
         for i, element in enumerate(all_elements):
             # Check if this is a tier heading
             if element.name in ['h1', 'h2', 'h3'] and not element.name == 'p':
                 text = element.get_text().strip()
-                tier_match = re.search(r'\b(S|A|B|C|D|F)\s*Tier\b', text, re.IGNORECASE)
-                if tier_match and not re.search(r'^\d+[\.:]', text):  # Make sure it's not a movie entry
-                    current_tier = tier_match.group(1).upper()
+                
+                # Check for tier headings in the format "Tier X: Description"
+                tier_match = re.search(r'Tier\s+(\d+):', text, re.IGNORECASE)
+                if tier_match:
+                    current_tier = int(tier_match.group(1))
                     continue
+                
+                # Also check for tier descriptions
+                for tier_num, tier_desc in tier_mapping.items():
+                    if tier_desc.lower() in text.lower():
+                        current_tier = tier_num
+                        break
             
             # Check if this is a movie entry
             if element.name in ['h3', 'h4'] or (element.name == 'p' and re.search(r'^\d+[\.:]', element.get_text().strip())):
@@ -54,11 +72,32 @@ def scrape_cage_movies():
                     
                 ranking = int(rank_match.group(1))
                 
-                # Extract tier information from the heading if present
+                # Determine tier based on ranking
+                # According to the blog post:
+                # Tier 1: Top 25 movies (ranks 1-25)
+                # Tier 2: Excellent movies (ranks 26-?)
+                # Tier 3: Great movies
+                # Tier 4: Good movies
+                # Tier 5: Decent movies
+                # Tier 6: For completionists only (lowest ranks)
+                
+                # Use the current_tier if available, otherwise infer from ranking
                 tier = current_tier
-                tier_in_heading = re.search(r'\b(S|A|B|C|D|F)\s*Tier\b', text, re.IGNORECASE)
-                if tier_in_heading:
-                    tier = tier_in_heading.group(1).upper()
+                
+                # If tier is still None, infer from ranking
+                if tier is None:
+                    if 1 <= ranking <= 25:
+                        tier = 1
+                    elif 26 <= ranking <= 40:
+                        tier = 2
+                    elif 41 <= ranking <= 60:
+                        tier = 3
+                    elif 61 <= ranking <= 80:
+                        tier = 4
+                    elif 81 <= ranking <= 90:
+                        tier = 5
+                    else:
+                        tier = 6
                 
                 # Extract movie title and year
                 # First try the pattern with year in parentheses
@@ -104,17 +143,75 @@ def scrape_cage_movies():
                 
                 description = description.strip()
                 
+                # If year is still None, try to extract it from the description
+                if year is None:
+                    # Look for year patterns in the description
+                    year_patterns = [
+                        r'released in (\d{4})',
+                        r'came out in (\d{4})',
+                        r'from (\d{4})',
+                        r'made in (\d{4})',
+                        r'the (\d{4}) film',
+                        r'in (\d{4}),',
+                        r'Year:\s*(\d{4})',
+                        r'Director:\s*.*?\s*\((\d{4})\)',
+                        r'\((\d{4})\)'
+                    ]
+                    
+                    for pattern in year_patterns:
+                        year_match = re.search(pattern, description, re.IGNORECASE)
+                        if year_match:
+                            try:
+                                year_candidate = int(year_match.group(1))
+                                if 1980 <= year_candidate <= 2024:  # Reasonable range for Cage movies
+                                    year = year_candidate
+                                    break
+                            except ValueError:
+                                continue
+                
+                # Manually set years for known movies if still None
+                if year is None:
+                    known_years = {
+                        "Face/Off": 1997,
+                        "Pig": 2021,
+                        "Raising Arizona": 1987,
+                        "Adaptation": 2002,
+                        "The Unbearable Weight of Massive Talent": 2022,
+                        "Wild at Heart": 1990,
+                        "Mandy": 2018,
+                        "National Treasure": 2004,
+                        "Leaving Las Vegas": 1995,
+                        "Kiss of Death": 1995,
+                        "Vampire's Kiss": 1989,
+                        "Bad Lieutenant: Port of Call New Orleans": 2009,
+                        "Con Air": 1997,
+                        "Lord of War": 2005,
+                        "Red Rock West": 1993,
+                        "The Rock": 1996,
+                        "Bringing Out the Dead": 1999,
+                        "Longlegs": 2024,
+                        "Dream Scenario": 2023,
+                        "The Weather Man": 2005
+                    }
+                    
+                    if title in known_years:
+                        year = known_years[title]
+                
+                # Get tier description
+                tier_description = tier_mapping.get(tier, "Unknown Tier")
+                
                 # Create a movie entry
                 movie_entry = {
                     "ranking": ranking,
                     "tier": tier,
+                    "tier_description": tier_description,
                     "title": title,
                     "year": year,
                     "description": description
                 }
                 
                 movie_entries.append(movie_entry)
-                print(f"Extracted movie {ranking}: {title} ({year}) - {tier} Tier")
+                print(f"Extracted movie {ranking}: {title} ({year}) - Tier {tier}: {tier_description}")
         
         # Sort by ranking
         movie_entries.sort(key=lambda x: x["ranking"])

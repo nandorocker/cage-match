@@ -33,6 +33,7 @@ env/
 
 # Output files
 cage_movies.json
+reference.html
 
 # OS specific files
 .DS_Store
