@@ -20,6 +20,85 @@ export default function Home() {
   const [bookmarkedMovies, setBookmarkedMovies] = useState<Set<number>>(new Set());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
+  // Load state from URL on initial render
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hash = window.location.hash.slice(1); // Remove the # character
+    if (!hash) return;
+
+    try {
+      const params = new URLSearchParams(hash);
+      
+      // Load section state
+      const section = params.get('section');
+      if (section) {
+        if (section === 'settings') {
+          setIsSettingsOpen(true);
+          setIsWatchlistSelected(false);
+          setSelectedTier(null);
+        } else if (section === 'watchlist') {
+          setIsWatchlistSelected(true);
+          setIsSettingsOpen(false);
+          setSelectedTier(null);
+        } else if (section.startsWith('tier-')) {
+          const tier = Number(section.replace('tier-', ''));
+          if (!isNaN(tier)) {
+            setSelectedTier(tier);
+            setIsWatchlistSelected(false);
+            setIsSettingsOpen(false);
+          }
+        }
+      }
+
+      // Load search query
+      const search = params.get('search');
+      if (search) {
+        setGlobalSearchQuery(search);
+      }
+
+      // Load sort direction
+      const sort = params.get('sort');
+      if (sort) {
+        setSortAscending(sort === 'asc');
+      }
+    } catch (error) {
+      console.error('Error parsing URL state:', error);
+    }
+  }, []);
+
+  // Update URL when state changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams();
+    
+    // Set section parameter based on current state
+    if (isSettingsOpen) {
+      params.set('section', 'settings');
+    } else if (isWatchlistSelected) {
+      params.set('section', 'watchlist');
+    } else if (selectedTier !== null) {
+      params.set('section', `tier-${selectedTier}`);
+    }
+
+    // Add other parameters
+    if (globalSearchQuery) {
+      params.set('search', globalSearchQuery);
+    }
+    if (sortAscending) {
+      params.set('sort', 'asc');
+    }
+
+    // Update URL without triggering a page reload
+    const newHash = params.toString();
+    if (newHash) {
+      window.history.replaceState(null, '', `#${newHash}`);
+    } else {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [selectedTier, isWatchlistSelected, isSettingsOpen, globalSearchQuery, sortAscending]);
+  
   // Load bookmarked movies from localStorage on initial render
   useEffect(() => {
     // This function should only run in the browser

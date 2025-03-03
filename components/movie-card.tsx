@@ -36,6 +36,11 @@ export function MovieCard({ movie, onBookmarkChange, isBookmarked: externalIsBoo
     // Call the callback if provided
     if (onBookmarkChange) {
       onBookmarkChange(movie.ranking, newState);
+      
+      // Update localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`bookmarked-${movie.ranking}`, newState.toString());
+      }
     }
   };
   
